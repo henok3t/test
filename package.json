@@ -1,0 +1,14 @@
+{
+  "name": "ladder-of-abba-moses",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A 3D platformer about St. Moses the Ethiopian and the ladder of virtues",
+  "scripts": {
+    "build": "esbuild src/main.js --bundle --minify --format=iife --outfile=dist/game.js",
+    "dev": "esbuild src/main.js --bundle --format=iife --outfile=dist/game.js --servedir=. --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "three": "^0.180.0"
+  }
+}

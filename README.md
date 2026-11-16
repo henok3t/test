@@ -1,0 +1,50 @@
+# The Ladder of Abba Moses
+
+A 3D platformer about St. Moses the Ethiopian, the robber who became a desert father.
+The climb is modelled on *The Ladder of Divine Ascent*: each stage has its own place, time of day and mechanic,
+and each mechanic is a virtue the player practises before the ending names it.
+
+| Stage | Time | What you do | Rung |
+|---|---|---|---|
+| The Gorge | night | break chests, carry gold, find it too heavy to climb with, lay it down | Repentance |
+| The Desert Road | dawn | bow under the thorn snares, kneel through the wind | Humility |
+| Scetis | morning | carry water from the well to three elders, who build you a stair | Mercy |
+| The Narrow Bridges | dusk | kneel before the raiders (or feed them) until they become brothers | Forgiveness |
+| The Cell | starlight | kneel in stillness until a path of light appears | Prayer |
+| The Summit | sunrise | the sword is offered back; do not take it | Love |
+
+Falling never ends the game: you get up where you last stood.
+
+## Run it
+
+```
+npm install
+npm run build      # writes dist/game.js
+```
+
+Then open `index.html` in a browser (no server needed), or `npm run dev` for a watching dev server.
+
+## Controls
+
+- Move: WASD / arrow keys. Jump: Space. Kneel: Shift (hold). Give: G. Strike: X. Look: drag.
+- Touch devices get an on-screen stick and buttons.
+
+## Layout
+
+- `src/build.js` – low-poly geometry helpers and props (rock towers, cells, church, palms, snares)
+- `src/level.js` – the six stages, placed platform by platform
+- `src/entities.js` – chests, elders, raiders, wind, the door, prayer spots
+- `src/ending.js` – the raid, the choice and the ending
+- `src/player.js`, `src/figure.js` – movement, collision and the robed figures
+- `src/env.js` – sky, time of day, lamps, terrain
+- `src/hud.js`, `src/input.js`, `src/audio.js` – captions, controls, synthesised sound
+
+## Test
+
+`node tests/playthrough.js` plays the whole game with a built-in autopilot in headless Chromium
+(needs `playwright` installed) and reports whether the ending is reached.
+
+## Sources
+
+Sayings are from the *Sayings of the Desert Fathers* (Abba Moses, Abba Anthony, Abba Sisoes),
+Palladius' *Lausiac History*, and Scripture.

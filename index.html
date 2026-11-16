@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>The Ladder of Abba Moses</title>
+<style>
+  :root { --gold: #f0cf86; --ink: #1b1410; --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #0a0d1f; color: #f6ecd8; font-family: var(--serif);
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+  #hud { position: fixed; inset: 0; pointer-events: none; }
+  #fade { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; }
+
+  #title { position: absolute; top: 9%; left: 0; right: 0; text-align: center; opacity: 0; transform: translateY(-8px); transition: opacity 1.2s, transform 1.2s; padding: 0 16px; }
+  #title.show { opacity: 1; transform: none; }
+  #title::before { content: ""; position: absolute; left: 50%; top: -40px; width: min(900px, 100vw); height: 210px; transform: translateX(-50%); z-index: -1; background: radial-gradient(ellipse at center, rgba(10,7,4,.55), rgba(10,7,4,0) 68%); }
+  #titleMain { font-size: clamp(26px, 5vw, 52px); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); text-shadow: 0 2px 18px rgba(0,0,0,.85), 0 0 3px rgba(0,0,0,.7); }
+  #titleMain::after { content: ""; display: block; width: 120px; height: 1px; margin: 10px auto; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  #titleSub { font-size: clamp(14px, 2vw, 19px); font-style: italic; text-shadow: 0 1px 10px rgba(0,0,0,.9); }
+
+  #caption { position: absolute; left: 50%; bottom: 17%; transform: translate(-50%, 8px); width: min(680px, 88vw); text-align: center; opacity: 0;
+    transition: opacity .5s, transform .5s; background: linear-gradient(90deg, transparent, rgba(12,9,6,.72) 12%, rgba(12,9,6,.72) 88%, transparent); padding: 12px 34px; }
+  #caption.show { opacity: 1; transform: translate(-50%, 0); }
+  #caption p { margin: 0; font-size: clamp(15px, 2vw, 20px); line-height: 1.45; text-wrap: balance; }
+  #caption cite { display: block; margin-top: 5px; font-size: clamp(11px, 1.4vw, 14px); letter-spacing: .08em; color: var(--gold); font-style: normal; }
+  #caption cite::before { content: "— "; }
+
+  #hint { position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); max-width: 92vw; text-align: center; opacity: 0; transition: opacity .3s;
+    font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: rgba(12,9,6,.78); border: 1px solid rgba(240,207,134,.4); border-radius: 999px; padding: 7px 18px; white-space: pre-wrap; }
+  #hint.show { opacity: 1; }
+  kbd { font: 600 12px system-ui, sans-serif; background: var(--gold); color: var(--ink); border-radius: 4px; padding: 2px 7px; margin: 0 2px; }
+
+  #inv { position: absolute; top: 14px; left: 14px; display: flex; flex-direction: column; gap: 6px; font: 13px system-ui, sans-serif; }
+  .chip { background: rgba(12,9,6,.72); border-left: 3px solid var(--gold); padding: 5px 10px; border-radius: 0 4px 4px 0; }
+  .chip.water { border-color: #7fd0ff; } .chip.bread { border-color: #c98a4a; }
+  .chip small { margin-left: 8px; opacity: .7; font-style: italic; }
+
+  #ladder { position: absolute; top: 50%; right: 16px; transform: translateY(-50%); display: none; flex-direction: column; gap: 0; padding: 4px 0;
+    border-left: 2px solid rgba(240,207,134,.35); border-right: 2px solid rgba(240,207,134,.35); width: 34px; }
+  body.playing #ladder { display: flex; }
+  .rung { position: relative; height: 30px; }
+  .rung::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: rgba(240,207,134,.3); transition: all 1s; }
+  .rung.lit::before { background: var(--gold); box-shadow: 0 0 12px 2px rgba(255,214,120,.9); height: 3px; }
+  .rung span { position: absolute; right: 44px; top: 50%; transform: translateY(-50%); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; opacity: 0; color: var(--gold); background: rgba(12,9,6,.6); padding: 2px 8px; border-radius: 3px; transition: opacity 1.5s; }
+  .rung.lit span { opacity: .95; }
+
+  #strikeKey { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: none; font: 13px system-ui, sans-serif; background: rgba(60,10,8,.8); border: 1px solid #c8443a; border-radius: 4px; padding: 5px 12px; }
+  body.canstrike:not(.touch) #strikeKey { display: block; }
+  #strikeKey.pulse, #bStrike.pulse { animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 22px 6px rgba(255,60,40,.75); } }
+
+  #center { position: absolute; left: 50%; top: 24%; transform: translateX(-50%); width: min(760px, 90vw); text-align: center; opacity: 0; transition: opacity .7s; text-shadow: 0 2px 16px rgba(0,0,0,.85), 0 0 3px rgba(0,0,0,.6); }
+  #center.show { opacity: 1; }
+  #center p { margin: 0 0 8px; font-size: clamp(18px, 2.9vw, 30px); line-height: 1.35; text-wrap: balance; }
+  #center p.second { color: var(--gold); font-size: clamp(20px, 3.3vw, 34px); }
+  #center p.second b { letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+  #center p.cite { color: var(--gold); font-size: clamp(13px, 1.7vw, 17px); letter-spacing: .12em; }
+
+  /* touch controls */
+  #touch { display: none; }
+  body.touch.playing #touch { display: block; }
+  #stick { position: absolute; left: max(18px, env(safe-area-inset-left)); bottom: max(22px, env(safe-area-inset-bottom)); width: 150px; height: 150px; border-radius: 50%; pointer-events: auto;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(240,207,134,.35); }
+  #knob { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px; border-radius: 50%; background: rgba(240,207,134,.5); }
+  .tb { position: absolute; pointer-events: auto; width: 74px; height: 74px; border-radius: 50%; border: 1px solid rgba(240,207,134,.5); background: rgba(12,9,6,.5); color: #f6ecd8;
+    font: 600 11px system-ui, sans-serif; letter-spacing: .08em; display: flex; align-items: center; justify-content: center; }
+  .tb.down { background: rgba(240,207,134,.55); color: var(--ink); }
+  #bJump { right: max(18px, env(safe-area-inset-right)); bottom: max(26px, env(safe-area-inset-bottom)); width: 88px; height: 88px; }
+  #bKneel { right: 116px; bottom: 26px; } #bGive { right: 30px; bottom: 126px; }
+  #bStrike { right: 116px; bottom: 112px; display: none; border-color: #c8443a; background: rgba(60,10,8,.6); }
+  body.canstrike #bStrike { display: flex; }
+
+  body.touch #ladder { top: 34%; transform: translateY(-50%) scale(.8); transform-origin: right center; }
+  @media (max-height: 480px) { #title { top: 4%; } #caption { bottom: 27%; } #hint { bottom: 4%; font-size: 12px; } #center { top: 12%; } }
+
+  /* start + end screens */
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; transition: opacity 1.4s; }
+  #start { background: radial-gradient(ellipse at 50% 40%, rgba(8,10,28,.25), rgba(4,5,16,.88)); }
+  #start.hide { opacity: 0; pointer-events: none; }
+  .screen h1 { margin: 0; font-weight: 400; font-size: clamp(30px, 7vw, 76px); letter-spacing: .1em; text-transform: uppercase; color: var(--gold); text-shadow: 0 4px 30px rgba(0,0,0,.8); line-height: 1.05; text-wrap: balance; }
+  .screen h1 small { display: block; font-size: .32em; letter-spacing: .32em; color: #f6ecd8; margin-bottom: 14px; }
+  .rule { width: 180px; height: 1px; margin: 22px auto; background: linear-gradient(90deg, transparent, var(--gold), transparent); }
+  .screen p { max-width: 560px; margin: 0 auto 10px; font-size: clamp(14px, 1.9vw, 18px); line-height: 1.55; text-wrap: pretty; }
+  .screen p.dim { opacity: .75; font-size: clamp(12px, 1.5vw, 14px); font-family: system-ui, sans-serif; }
+  button.go { margin-top: 20px; pointer-events: auto; cursor: pointer; font: 17px var(--serif); letter-spacing: .28em; text-transform: uppercase; color: var(--ink); background: var(--gold);
+    border: 0; border-radius: 2px; padding: 14px 44px; box-shadow: 0 0 34px rgba(240,207,134,.4); }
+  button.go:hover { background: #ffe2a0; }
+  #mute { position: fixed; right: 12px; top: 10px; pointer-events: auto; cursor: pointer; background: rgba(12,9,6,.55); color: #f6ecd8; border: 1px solid rgba(240,207,134,.35); border-radius: 4px; font: 12px system-ui, sans-serif; padding: 5px 9px; }
+  #end { opacity: 0; pointer-events: none; background: #fff8e8; color: #3a2a18; }
+  #end.show { opacity: 1; pointer-events: auto; }
+  #end h1 { color: #9a6a1c; text-shadow: none; font-size: clamp(24px, 4.6vw, 48px); text-transform: none; letter-spacing: .04em; }
+  #end .rule { background: linear-gradient(90deg, transparent, #9a6a1c, transparent); }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud">
+  <div id="title"><div id="titleMain"></div><div id="titleSub"></div></div>
+  <div id="inv"></div>
+  <div id="strikeKey"><kbd>X</kbd> Strike</div>
+  <div id="ladder"></div>
+  <div id="center"></div>
+  <div id="caption"></div>
+  <div id="hint"></div>
+  <div id="touch">
+    <div id="stick"><div id="knob"></div></div>
+    <div class="tb" id="bStrike">STRIKE</div>
+    <div class="tb" id="bGive">GIVE</div>
+    <div class="tb" id="bKneel">KNEEL</div>
+    <div class="tb" id="bJump">JUMP</div>
+  </div>
+</div>
+<div id="fade"></div>
+<button id="mute">Sound: on</button>
+
+<div class="screen" id="start">
+  <h1><small>A climb in six rungs</small>The Ladder of Abba Moses</h1>
+  <div class="rule"></div>
+  <p>Egypt, the fourth century. Moses is a robber chief, strong and feared. Before the end he will be one of the gentlest of the desert fathers.</p>
+  <p class="dim">Move with WASD or the arrow keys · Space to jump · Shift to kneel · G to give · drag to look around.<br>On a phone, use the on-screen controls.</p>
+  <button class="go" id="begin">Begin</button>
+</div>
+
+<div class="screen" id="end">
+  <h1>Holy Abba Moses, pray to God for us.</h1>
+  <div class="rule"></div>
+  <p>St. Moses the Ethiopian was a robber who became a monk of Scetis in the Egyptian desert. Around the year 405, when raiders came, he refused to take up the sword or to flee, and was killed with seven of his brothers.</p>
+  <p>The sayings in this game are from the <i>Sayings of the Desert Fathers</i>, the <i>Lausiac History</i> and Holy Scripture.</p>
+  <button class="go" id="again">Climb again</button>
+</div>
+<script src="dist/game.js"></script>
+</body>
+</html>

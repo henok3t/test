@@ -19,7 +19,7 @@ Falling never ends the game: you get up where you last stood.
 
 ```
 npm install
-npm run build      # writes dist/game.js
+npm run build      # writes dist/game.js and dist/index.html (the whole game in one file)
 ```
 
 Then open `index.html` in a browser (no server needed), or `npm run dev` for a watching dev server.
@@ -27,7 +27,8 @@ Then open `index.html` in a browser (no server needed), or `npm run dev` for a w
 ## Controls
 
 - Move: WASD / arrow keys. Jump: Space. Kneel: Shift (hold). Give: G. Strike: X. Look: drag.
-- Touch devices get an on-screen stick and buttons.
+- Phones and tablets: the lower-left of the screen is a stick that centres under your thumb; JUMP, KNEEL, GIVE (and STRIKE when it applies) are on the right; drag anywhere else to look. Works in portrait and landscape.
+- If the frame rate is low the game lowers its resolution, then turns shadows off, by itself.
 
 ## Layout
 

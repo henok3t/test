@@ -11,8 +11,16 @@ import { clamp, damp, angleDamp } from './util.js';
 
 const canvas = document.getElementById('c');
 const lowSpec = matchMedia('(pointer: coarse)').matches;
-const renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowSpec, powerPreference: 'high-performance' });
-renderer.setPixelRatio(Math.min(devicePixelRatio || 1, lowSpec ? 1.5 : 2));
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowSpec, powerPreference: 'high-performance' }); }
+catch (e) {
+  window.__fail('This browser could not start 3D graphics (WebGL 2). Try updating it, or open this page in Chrome or Safari.');
+  window.__ready = true;
+  throw e;
+}
+let pixelRatio = Math.min(devicePixelRatio || 1, lowSpec ? 1.5 : 2);
+renderer.setPixelRatio(pixelRatio);
+canvas.addEventListener('webglcontextlost', e => e.preventDefault());
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -24,7 +32,7 @@ const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 1000);
 const G = {
   scene, camera, renderer, lowSpec,
   colliders: [], camSolids: [], ents: [], lamps: [], winds: [],
-  time: 0, state: 'title', zone: 0, fallT: 0, hintT: 0, hintMsg: '', heavy: false, frozen: false, forceKneel: false,
+  adaptive: true, quality: 0, time: 0, state: 'title', zone: 0, fallT: 0, hintT: 0, hintMsg: '', heavy: false, frozen: false, forceKneel: false,
   inv: { gold: 0, water: 0, bread: 0 },
   stats: { goldTaken: 0, gaveToPoor: false, falls: 0, served: 0, forgiven: 0, struck: 0, prayers: 0 },
   rungs: [0, 0, 0, 0, 0, 0], canStrike: true, told: {},
@@ -206,7 +214,7 @@ function cameraUpdate(dt) {
   }
   c.cur = damp(c.cur ?? want, want, want < (c.cur ?? want) ? 18 : 3, dt);
   camera.position.set(c.look.x + ux * c.cur, c.look.y + uy * c.cur, c.look.z + uz * c.cur);
-  camera.lookAt(c.look.x, c.look.y + 0.4, c.look.z);
+  camera.lookAt(c.look.x, c.look.y + (camera.aspect < 0.8 ? -1.5 : 0.4), c.look.z);   // upright phone: keep Moses above the thumbs
 }
 
 function update(dt) {
@@ -229,6 +237,7 @@ function resize() {
   renderer.setSize(w, h, false);
   camera.aspect = w / h; camera.fov = w < h ? 72 : 55;
   camera.updateProjectionMatrix();
+  if (G.state !== 'ending') G.cam.dist = w < h ? 11 : 9.5;
 }
 addEventListener('resize', resize); resize();
 
@@ -246,14 +255,29 @@ function begin() {
 }
 G.begin = begin;
 document.getElementById('begin').addEventListener('click', begin);
+document.addEventListener('visibilitychange', () => { G.audio.pause(document.hidden); last = performance.now(); acc = 0; });
 addEventListener('keydown', e => { if (e.code === 'Enter' && G.state === 'title') begin(); });
 document.getElementById('again').addEventListener('click', () => location.reload());
 document.getElementById('mute').addEventListener('click', e => { e.currentTarget.textContent = G.audio.toggle() ? 'Sound: on' : 'Sound: off'; });
 
 let last = performance.now(), acc = 0;
 const STEP = 1 / 60;
+let slow = 0, ema = 16;
+// If the device cannot hold a playable frame rate, trade sharpness and then shadows for speed.
+function adapt(ms) {
+  if (!G.adaptive || G.state === 'title' || G.quality >= 3) return;
+  ema += (Math.min(ms, 250) - ema) * (ms > 120 ? 0.3 : 0.05);
+  slow = ema > 38 ? slow + ms : 0;
+  if (slow < 2500) return;
+  slow = 0; ema = 20; G.quality++;
+  if (G.quality === 1) pixelRatio = Math.min(pixelRatio, 1.1);
+  else if (G.quality === 2) pixelRatio = Math.min(pixelRatio, 0.8);
+  else { G.env.sun.castShadow = false; renderer.shadowMap.autoUpdate = false; }
+  renderer.setPixelRatio(pixelRatio); resize();
+}
 function frame(now) {
   requestAnimationFrame(frame);
+  adapt(Math.min(1000, now - last));
   acc += Math.min(0.1, (now - last) / 1000); last = now;
   let n = 0;
   while (acc >= STEP && n < 4) { update(STEP); acc -= STEP; n++; }
@@ -262,6 +286,8 @@ function frame(now) {
 }
 G.env.update(0, G);
 requestAnimationFrame(frame);
+window.__ready = true;
+{ const b = document.getElementById('begin'); b.disabled = false; b.textContent = 'Begin'; }
 
 // ── A small autopilot used by the automated playthrough test (window.__game.bot). ──
 function groundAhead(x, z, y) {

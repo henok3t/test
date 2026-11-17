@@ -33,6 +33,7 @@ export class Env {
     const sun = this.sun = new THREE.DirectionalLight(0xffffff, 1);
     sun.castShadow = true;
     sun.shadow.mapSize.set(G.lowSpec ? 1024 : 2048, G.lowSpec ? 1024 : 2048);
+    if (G.lowSpec) this.G.renderer.shadowMap.type = THREE.PCFShadowMap;
     Object.assign(sun.shadow.camera, { left: -38, right: 38, top: 38, bottom: -38, near: 1, far: 190 });
     sun.shadow.bias = -0.0006; sun.shadow.normalBias = 0.05;
     s.add(sun, sun.target);

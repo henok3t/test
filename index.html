@@ -8,7 +8,7 @@
   :root { --gold: #f0cf86; --ink: #1b1410; --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif; }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; overflow: hidden; background: #0a0d1f; color: #f6ecd8; font-family: var(--serif);
-    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; }
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none; overscroll-behavior: none; -webkit-tap-highlight-color: transparent; }
   #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
   #hud { position: fixed; inset: 0; pointer-events: none; }
   #fade { position: fixed; inset: 0; background: #000; opacity: 0; pointer-events: none; }
@@ -53,6 +53,7 @@
 
   #center { position: absolute; left: 50%; top: 24%; transform: translateX(-50%); width: min(760px, 90vw); text-align: center; opacity: 0; transition: opacity .7s; text-shadow: 0 2px 16px rgba(0,0,0,.85), 0 0 3px rgba(0,0,0,.6); }
   #center.show { opacity: 1; }
+  #center::before { content: ""; position: absolute; inset: -34px -10px; z-index: -1; background: radial-gradient(ellipse at center, rgba(24,14,4,.5), rgba(24,14,4,0) 70%); }
   #center p { margin: 0 0 8px; font-size: clamp(18px, 2.9vw, 30px); line-height: 1.35; text-wrap: balance; }
   #center p.second { color: var(--gold); font-size: clamp(20px, 3.3vw, 34px); }
   #center p.second b { letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
@@ -61,19 +62,50 @@
   /* touch controls */
   #touch { display: none; }
   body.touch.playing #touch { display: block; }
-  #stick { position: absolute; left: max(18px, env(safe-area-inset-left)); bottom: max(22px, env(safe-area-inset-bottom)); width: 150px; height: 150px; border-radius: 50%; pointer-events: auto;
-    background: rgba(255,255,255,.07); border: 1px solid rgba(240,207,134,.35); }
-  #knob { position: absolute; left: 50%; top: 50%; width: 60px; height: 60px; margin: -30px; border-radius: 50%; background: rgba(240,207,134,.5); }
-  .tb { position: absolute; pointer-events: auto; width: 74px; height: 74px; border-radius: 50%; border: 1px solid rgba(240,207,134,.5); background: rgba(12,9,6,.5); color: #f6ecd8;
-    font: 600 11px system-ui, sans-serif; letter-spacing: .08em; display: flex; align-items: center; justify-content: center; }
-  .tb.down { background: rgba(240,207,134,.55); color: var(--ink); }
-  #bJump { right: max(18px, env(safe-area-inset-right)); bottom: max(26px, env(safe-area-inset-bottom)); width: 88px; height: 88px; }
-  #bKneel { right: 116px; bottom: 26px; } #bGive { right: 30px; bottom: 126px; }
-  #bStrike { right: 116px; bottom: 112px; display: none; border-color: #c8443a; background: rgba(60,10,8,.6); }
+  body.touch.ending #touch { display: none; }
+  #stickZone { position: absolute; left: 0; bottom: 0; width: 50%; height: min(46%, 340px); pointer-events: auto; }
+  #stick { position: fixed; left: max(22px, env(safe-area-inset-left)); bottom: max(26px, env(safe-area-inset-bottom)); width: 132px; height: 132px; border-radius: 50%; pointer-events: none;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(240,207,134,.4); }
+  #knob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; margin: -28px; border-radius: 50%; background: rgba(240,207,134,.55); }
+  .tb { position: absolute; pointer-events: auto; width: 72px; height: 72px; border-radius: 50%; border: 1px solid rgba(240,207,134,.55); background: rgba(12,9,6,.55); color: #f6ecd8;
+    font: 600 11px system-ui, sans-serif; letter-spacing: .08em; display: flex; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+  .tb.down { background: rgba(240,207,134,.6); color: var(--ink); }
+  .tb.glow { border-color: var(--gold); box-shadow: 0 0 0 2px rgba(240,207,134,.9), 0 0 20px 4px rgba(240,207,134,.55); }
+  #bJump { right: max(16px, env(safe-area-inset-right)); bottom: max(24px, env(safe-area-inset-bottom)); width: 88px; height: 88px; }
+  #bKneel { right: 114px; bottom: max(24px, env(safe-area-inset-bottom)); }
+  #bGive { right: 24px; bottom: calc(max(24px, env(safe-area-inset-bottom)) + 98px); }
+  #bStrike { right: 110px; bottom: calc(max(24px, env(safe-area-inset-bottom)) + 84px); display: none; border-color: #c8443a; background: rgba(60,10,8,.65); }
   body.canstrike #bStrike { display: flex; }
 
-  body.touch #ladder { top: 34%; transform: translateY(-50%) scale(.8); transform-origin: right center; }
+  /* On a phone the text must never sit under the thumbs. */
+  body.touch #ladder { top: 50px; right: 12px; transform: scale(.62); transform-origin: top right; }
+  body.touch .rung span { display: none; }
+  body.touch #hint { border-radius: 14px; font-size: 13px; padding: 7px 14px; white-space: normal; }
+  body.touch #mute { font-size: 11px; padding: 4px 8px; }
+  body.touch #inv { font-size: 12px; top: 10px; left: 10px; }
+  @media (orientation: portrait) {
+    body.touch #title { top: 58px; }
+    body.touch #hint { bottom: calc(max(24px, env(safe-area-inset-bottom)) + 186px); width: max-content; max-width: 92vw; }
+    body.touch #caption { bottom: calc(max(24px, env(safe-area-inset-bottom)) + 246px); width: 94vw; padding: 9px 16px; }
+    body.touch #caption p { font-size: 15px; line-height: 1.35; }
+    body.touch #center { top: 16%; }
+  }
+  @media (orientation: landscape) {
+    body.touch #title { top: 8px; }
+    body.touch #titleMain { font-size: clamp(20px, 6vh, 34px); }
+    body.touch #titleMain::after { margin: 4px auto; }
+    body.touch #titleSub { font-size: 13px; }
+    body.touch #hint { bottom: 8px; max-width: calc(100vw - 400px); min-width: 0; }
+    body.touch #caption { bottom: 58px; width: calc(100vw - 400px); padding: 8px 14px; background: rgba(12,9,6,.72); border-radius: 8px; }
+    body.touch #caption p { font-size: 14px; line-height: 1.3; }
+    body.touch #caption cite { font-size: 11px; margin-top: 2px; }
+    body.touch #center { top: 8%; width: calc(100vw - 60px); }
+    body.touch #center p { font-size: clamp(15px, 5.2vh, 24px); margin-bottom: 4px; }
+  }
   @media (max-height: 480px) { #title { top: 4%; } #caption { bottom: 27%; } #hint { bottom: 4%; font-size: 12px; } #center { top: 12%; } }
+  .only-touch { display: none; } body.touch .only-touch { display: inline; } body.touch .only-keys { display: none; }
+  #err { display: none; max-width: 520px; margin: 14px auto 0; padding: 10px 14px; border: 1px solid #c8443a; background: rgba(60,10,8,.8); border-radius: 6px; font: 13px/1.45 system-ui, sans-serif; }
+  button.go:disabled { opacity: .55; box-shadow: none; }
 
   /* start + end screens */
   @media (max-height: 560px) { .screen { padding: 10px 24px; } .screen p { font-size: 13px; line-height: 1.35; margin-bottom: 5px; } .screen p.dim { font-size: 11px; } button.go { margin-top: 8px; padding: 10px 36px; font-size: 15px; } .screen h1 small { margin-bottom: 6px; } }
@@ -108,6 +140,7 @@
   <div id="caption"></div>
   <div id="hint"></div>
   <div id="touch">
+    <div id="stickZone"></div>
     <div id="stick"><div id="knob"></div></div>
     <div class="tb" id="bStrike">STRIKE</div>
     <div class="tb" id="bGive">GIVE</div>
@@ -122,8 +155,9 @@
   <h1><small>A climb in six rungs</small>The Ladder of Abba Moses</h1>
   <div class="rule"></div>
   <p>Egypt, the fourth century. Moses is a robber chief, strong and feared. Before the end he will be one of the gentlest of the desert fathers.</p>
-  <p class="dim">Move with WASD or the arrow keys · Space to jump · Shift to kneel · G to give · drag to look around.<br>On a phone, use the on-screen controls.</p>
-  <button class="go" id="begin">Begin</button>
+  <p class="dim"><span class="only-keys">Move with WASD or the arrow keys · Space to jump · Shift to kneel · G to give · drag to look around.</span><span class="only-touch">Left thumb moves · right thumb jumps, kneels and gives · drag anywhere else to look around. Works upright or sideways.</span></p>
+  <button class="go" id="begin" disabled>Loading…</button>
+  <div id="err"></div>
 </div>
 
 <div class="screen" id="end">
@@ -133,6 +167,17 @@
   <p>The sayings in this game are from the <i>Sayings of the Desert Fathers</i>, the <i>Lausiac History</i> and Holy Scripture.</p>
   <button class="go" id="again">Climb again</button>
 </div>
+<script>
+  // If the game cannot load or start, say so on the page instead of leaving a dead button.
+  window.__fail = function (msg) {
+    var e = document.getElementById('err'), b = document.getElementById('begin');
+    e.textContent = msg; e.style.display = 'block'; b.disabled = true; b.textContent = 'Cannot start';
+  };
+  window.addEventListener('error', function (ev) {
+    if (window.__ready) return;
+    __fail(ev.message ? 'The game hit an error while loading: ' + ev.message : 'The game file did not load. Check your connection and reload the page.');
+  }, true);
+</script>
 <script src="dist/game.js"></script>
 </body>
 </html>

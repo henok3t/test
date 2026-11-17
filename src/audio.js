@@ -30,6 +30,8 @@ export class Sound {
     } catch (e) { this.ctx = null; }
   }
 
+  pause(hidden) { if (this.ctx) { if (hidden) this.ctx.suspend(); else this.ctx.resume(); } }
+
   toggle() {
     this.on = !this.on;
     if (this.master) this.master.gain.value = this.on ? 0.6 : 0;

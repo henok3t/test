@@ -48,6 +48,7 @@ export class Hud {
     const el = this.$('hint');
     if (s) el.innerHTML = this.fmt(s);
     el.classList.toggle('show', !!s);
+    for (const [k, id] of [['give', 'bGive'], ['kneel', 'bKneel'], ['strike', 'bStrike'], ['jump', 'bJump']]) this.$(id).classList.toggle('glow', s.includes('{' + k + '}'));
   }
 
   inv(inv) {

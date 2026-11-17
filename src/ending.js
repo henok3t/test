@@ -144,6 +144,7 @@ export class Ending {
     this.on = true; this.t = 0;
     G.state = 'ending'; G.frozen = true;
     G.hud.hint(''); G.hud.strike(false);
+    document.body.classList.add('ending');
     G.hud.fade(1, '#fff', 1.6);
     G.audio.bell(196, 0.3, 6); G.audio.mood(5);
     const s = G.stats, L = this.lines;

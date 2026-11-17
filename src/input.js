@@ -35,24 +35,34 @@ export class Input {
     canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
     canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-    const zone = $('stick'), knob = $('knob');
+    // The whole lower-left of the screen is the stick: it re-centres wherever the thumb lands.
+    const zone = $('stickZone'), ring = $('stick'), knob = $('knob');
     let sid = null, ox = 0, oy = 0;
     const moveStick = e => {
       let dx = e.clientX - ox, dy = e.clientY - oy;
-      const len = Math.hypot(dx, dy), max = 52;
+      const len = Math.hypot(dx, dy), max = 46, dead = 6;
       if (len > max) { dx *= max / len; dy *= max / len; }
       knob.style.transform = `translate(${dx}px, ${dy}px)`;
-      this.stick.x = dx / max; this.stick.y = -dy / max;
+      const k = len < dead ? 0 : Math.min(1, (len - dead) / (max - dead)) / (len || 1);
+      this.stick.x = (e.clientX - ox) * k; this.stick.y = -(e.clientY - oy) * k;
     };
     zone.addEventListener('pointerdown', e => {
       hud.setTouch(true);
       sid = e.pointerId; zone.setPointerCapture(sid);
-      const r = zone.getBoundingClientRect(); ox = r.left + r.width / 2; oy = r.top + r.height / 2;
+      const r = ring.getBoundingClientRect(), half = r.width / 2;
+      ox = Math.max(half + 4, Math.min(innerWidth - half - 4, e.clientX)); oy = Math.max(half + 4, Math.min(innerHeight - half - 4, e.clientY));
+      ring.style.left = (ox - half) + 'px'; ring.style.top = (oy - half) + 'px'; ring.style.bottom = 'auto';
       moveStick(e); e.preventDefault();
     });
     zone.addEventListener('pointermove', e => { if (e.pointerId === sid) moveStick(e); });
-    const stickEnd = e => { if (e.pointerId === sid) { sid = null; this.stick.x = this.stick.y = 0; knob.style.transform = ''; } };
+    const stickEnd = e => {
+      if (e.pointerId !== sid) return;
+      sid = null; this.stick.x = this.stick.y = 0; knob.style.transform = '';
+      ring.style.left = ring.style.top = ring.style.bottom = '';
+    };
     zone.addEventListener('pointerup', stickEnd); zone.addEventListener('pointercancel', stickEnd);
+    for (const ev of ['gesturestart', 'gesturechange', 'dblclick']) addEventListener(ev, e => e.preventDefault(), { passive: false });
+    addEventListener('contextmenu', e => { if (document.body.classList.contains('touch')) e.preventDefault(); });
 
     const hold = (id, down, up) => {
       const el = $(id);

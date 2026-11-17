@@ -1,0 +1,50 @@
+// Real input only: mouse click, key presses, touch events. Nothing is called on the game directly except reads.
+const { chromium } = require('playwright');
+const read = page => page.evaluate(() => { const G = window.__game, p = G.player; return { t: G.time, x: p.pos.x, y: p.pos.y, z: p.pos.z, kneel: p.kneeling, state: G.state, gold: G.inv.gold, yaw: G.cam.yaw }; });
+const waitSim = async (page, secs) => { const t0 = (await read(page)).t; let maxY = -99, s; do { await page.waitForTimeout(60); s = await read(page); maxY = Math.max(maxY, s.y); } while (s.t - t0 < secs); return { ...s, maxY }; };
+(async () => {
+  const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+  // ---- desktop: keyboard + mouse ----
+  let ctx = await browser.newContext({ viewport: { width: 640, height: 400 } });
+  let page = await ctx.newPage(); const errs = [];
+  page.on('pageerror', e => errs.push(e.message));
+  await page.goto('file://' + require('path').resolve(__dirname, '..', 'index.html')); await page.waitForTimeout(1200);
+  await page.click('#begin'); await page.waitForTimeout(300);
+  const R = {}; let a = await read(page); R.started = a.state;
+  await page.keyboard.down('KeyW'); let b = await waitSim(page, 1); await page.keyboard.up('KeyW');
+  R.forwardSpeed = +((a.z - b.z) / (b.t - a.t)).toFixed(2);
+  await waitSim(page, 0.4); await page.keyboard.down('Space'); b = await waitSim(page, 0.7); await page.keyboard.up('Space');
+  R.jumpHeight = +b.maxY.toFixed(2);
+  await waitSim(page, 0.5); await page.keyboard.down('ShiftLeft'); b = await waitSim(page, 0.3); R.kneelsOnShift = b.kneel; await page.keyboard.up('ShiftLeft');
+  b = await waitSim(page, 0.3); R.standsOnRelease = !b.kneel;
+  a = await read(page); await page.keyboard.down('ArrowRight'); b = await waitSim(page, 0.6); await page.keyboard.up('ArrowRight'); R.rightMovesPlusX = b.x > a.x + 1;
+  await page.mouse.move(300, 200); await page.mouse.down(); await page.mouse.move(380, 200, { steps: 4 }); await page.mouse.up();
+  b = await waitSim(page, 0.1); R.dragTurnsCamera = Math.abs(b.yaw) > 0.1;
+  await page.click('#mute'); R.muteLabel = await page.textContent('#mute');
+  await page.evaluate(() => document.getElementById('end').classList.add('show')); await page.waitForTimeout(1600);
+  let nav = 0; page.on('framenavigated', () => nav++);
+  await page.click('#again'); await page.waitForTimeout(1500);
+  R.climbAgainReloads = nav > 0 && (await read(page)).state === 'title';
+  console.log('desktop', JSON.stringify(R), errs);
+  await ctx.close();
+  // ---- phone: touch events ----
+  ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, hasTouch: true, isMobile: true });
+  page = await ctx.newPage(); const cdp = await ctx.newCDPSession(page);
+  await page.goto('file://' + require('path').resolve(__dirname, '..', 'index.html')); await page.waitForTimeout(1200);
+  await page.tap('#begin'); await page.waitForTimeout(300);
+  const T = {}; a = await read(page); T.started = a.state;
+  const sb = await page.locator('#stick').boundingBox(), sx = sb.x + sb.width / 2, sy = sb.y + sb.height / 2;
+  const touch = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
+  await touch('touchStart', [{ x: sx, y: sy, id: 1 }]); await touch('touchMove', [{ x: sx, y: sy - 50, id: 1 }]);
+  b = await waitSim(page, 1); T.stickForwardSpeed = +((a.z - b.z) / (b.t - a.t)).toFixed(2);
+  const jb = await page.locator('#bJump').boundingBox();
+  await touch('touchStart', [{ x: sx, y: sy - 50, id: 1 }, { x: jb.x + 40, y: jb.y + 40, id: 2 }]);
+  b = await waitSim(page, 0.6); T.jumpWhileMoving = +b.maxY.toFixed(2);
+  await touch('touchEnd', []); await waitSim(page, 0.6);
+  const kb = await page.locator('#bKneel').boundingBox();
+  await touch('touchStart', [{ x: kb.x + 30, y: kb.y + 30, id: 3 }]); b = await waitSim(page, 0.3); T.kneelButton = b.kneel; await touch('touchEnd', []);
+  b = await waitSim(page, 0.3); T.standsAfter = !b.kneel;
+  T.strikeButtonVisible = await page.locator('#bStrike').isVisible(); T.giveButtonVisible = await page.locator('#bGive').isVisible();
+  console.log('phone', JSON.stringify(T));
+  await browser.close();
+})();

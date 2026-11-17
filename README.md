@@ -41,8 +41,11 @@ Then open `index.html` in a browser (no server needed), or `npm run dev` for a w
 
 ## Test
 
-`node tests/playthrough.js` plays the whole game with a built-in autopilot in headless Chromium
-(needs `playwright` installed) and reports whether the ending is reached.
+All three need `playwright` installed and a built `dist/game.js`.
+
+- `node tests/playthrough.js` plays the whole game with a built-in autopilot and reports whether the ending is reached.
+- `node tests/input.js` uses only real clicks, key presses and touch events: Begin, move, jump, kneel, camera drag, touch stick and buttons.
+- `node tests/begin-button.js` checks at 117 window sizes that a click on Begin actually lands on Begin.
 
 ## Sources
 

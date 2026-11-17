@@ -246,6 +246,7 @@ function begin() {
 }
 G.begin = begin;
 document.getElementById('begin').addEventListener('click', begin);
+addEventListener('keydown', e => { if (e.code === 'Enter' && G.state === 'title') begin(); });
 document.getElementById('again').addEventListener('click', () => location.reload());
 document.getElementById('mute').addEventListener('click', e => { e.currentTarget.textContent = G.audio.toggle() ? 'Sound: on' : 'Sound: off'; });
 

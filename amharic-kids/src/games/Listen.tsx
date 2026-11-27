@@ -4,6 +4,7 @@ import { Picture } from '../art/Pictures.tsx';
 import { Anbessa } from '../art/Anbessa.tsx';
 import { playClip, saySequence, sfx, speak, stopAll } from '../audio/audio.ts';
 import { Icon, Sparkles, shuffle } from '../ui/ui.tsx';
+import { N } from '../data/narration.ts';
 
 /** Hear an Amharic word, tap the matching picture. */
 export function Listen({ lesson, words, rounds, onDone }: { lesson: Lesson; words: string[]; rounds: number; onDone: () => void }) {
@@ -25,7 +26,7 @@ export function Listen({ lesson, words, rounds, onDone }: { lesson: Lesson; word
     setWrong([]);
     setRight(null);
     saySequence(r === 0
-      ? [{ en: 'Listen carefully! Tap the picture that matches.' }, { pause: 200 }, { clip: round.target.clip }]
+      ? [{ en: N.listenIntro }, { pause: 200 }, { clip: round.target.clip }]
       : [{ pause: 300 }, { clip: round.target.clip }]);
     return () => stopAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -38,12 +39,12 @@ export function Listen({ lesson, words, rounds, onDone }: { lesson: Lesson; word
       sfx('yay');
       stopAll();
       await playClip(w.clip);
-      await speak(`Yes! ${w.en}!`);
+      await speak(N.listenYes(w));
       setTimeout(() => (r < plan.length - 1 ? setR(r + 1) : onDone()), 500);
     } else {
       sfx('oops');
       setWrong([...wrong, w.id]);
-      saySequence([{ en: 'Oops! Listen again.' }, { clip: round.target.clip }]);
+      saySequence([{ en: N.listenOops }, { clip: round.target.clip }]);
     }
   };
 

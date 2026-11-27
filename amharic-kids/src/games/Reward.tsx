@@ -6,6 +6,7 @@ import { Sticker } from '../art/Pictures.tsx';
 import { playClip, saySequence, sfx, stopAll } from '../audio/audio.ts';
 import { completeLesson, useApp } from '../state.tsx';
 import { Confetti, Icon, RoundButton } from '../ui/ui.tsx';
+import { N } from '../data/narration.ts';
 
 export function Reward({ lesson, onAgain }: { lesson: Lesson; onAgain: () => void }) {
   const { update, go, name } = useApp();
@@ -16,8 +17,8 @@ export function Reward({ lesson, onAgain }: { lesson: Lesson; onAgain: () => voi
       update((s) => completeLesson(s, lesson.id, lesson.sticker?.id));
     }
     sfx('yay');
-    saySequence([{ pause: 400 }, { en: `Amazing, ${name}! You finished lesson ${lesson.number}, and you earned a sticker!` },
-      { en: `You know ${lesson.words.length} Amharic words now. Tap them to hear them again.` }]);
+    saySequence([{ pause: 400 }, { en: N.rewardDone(lesson) },
+      { en: N.rewardWords(lesson) }]);
     return () => stopAll();
   }, [lesson, name, update]);
 

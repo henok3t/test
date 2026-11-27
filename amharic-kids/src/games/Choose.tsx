@@ -4,6 +4,7 @@ import { Village } from '../art/Village.tsx';
 import { Character } from './Story.tsx';
 import { playClip, saySequence, sfx, speak, stopAll } from '../audio/audio.ts';
 import { Icon, RoundButton, Sparkles } from '../ui/ui.tsx';
+import { N } from '../data/narration.ts';
 
 const SCENES: Record<Situation['scene'], { bg: SceneBackground; cast: Record<CharacterId, Pose>; extra?: 'question' }> = {
   arrive: { bg: 'day', cast: { anbessa: 'idle', tota: 'wave' } },
@@ -43,13 +44,13 @@ export function Choose({ lesson, situations, onDone }: { lesson: Lesson; situati
       await playClip(clipFor(w));
       setTalking(false);
       sfx('yay');
-      await speak(`That’s right! ${fill(w.en, false)}!`);
+      await speak(N.chooseRight(w));
       setTimeout(() => (i < situations.length - 1 ? setI(i + 1) : onDone()), 600);
     } else {
       sfx('oops');
       setWrong([...wrong, w.id]);
       await playClip(clipFor(w));
-      speak(`Hmm, ${fill(w.translit, false)} means ${fill(w.en, false)}. Try another one!`);
+      speak(N.chooseWrong(w));
     }
   };
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Lesson } from '../data/types.ts';
 import { playClip, saySequence, sfx, stopAll } from '../audio/audio.ts';
 import { Confetti, RoundButton } from '../ui/ui.tsx';
+import { N } from '../data/narration.ts';
 
 const FONT = (px: number) => `700 ${px}px "Noto Sans Ethiopic", sans-serif`;
 const NEEDED = 0.55; // share of the letter that must be painted
@@ -21,10 +22,10 @@ export function Trace({ lesson, onDone }: { lesson: Lesson; onDone: () => void }
 
   useEffect(() => {
     if (phase === 'meet') {
-      saySequence([{ en: `This is an Amharic letter. It says ${letter.sayLike}.` }, { clip: letter.clip }, { pause: 300 },
-        { en: `It is the first sound in ${word.translit}.` }, { clip: word.clip }]);
+      saySequence([{ en: N.letterMeet(letter) }, { clip: letter.clip }, { pause: 300 },
+        { en: N.letterFrom(word) }, { clip: word.clip }]);
     }
-    if (phase === 'trace') saySequence([{ en: 'Now trace the letter with your finger. Paint it all in!' }]);
+    if (phase === 'trace') saySequence([{ en: N.traceGo }]);
     return () => stopAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
@@ -126,7 +127,7 @@ export function Trace({ lesson, onDone }: { lesson: Lesson; onDone: () => void }
       g.strokeText(letter.char, size / 2, y);
       g.fillText(letter.char, size / 2, y);
       sfx('yay');
-      saySequence([{ en: 'Wow! Beautiful tracing!' }, { clip: letter.clip }, { en: `${letter.sayLike}, like in ${word.translit}!` }]);
+      saySequence([{ en: N.traceWow }, { clip: letter.clip }, { en: N.traceDone(letter, word) }]);
     } else sfx('pop');
   };
 

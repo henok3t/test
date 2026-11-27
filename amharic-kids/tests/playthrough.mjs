@@ -191,6 +191,9 @@ async function run(name, device) {
   await page.waitForSelector('.parents-screen');
   await shot('grown-ups');
 
+  // every sentence the app spoke must be in data/narration.ts, or it would have no recorded voice
+  const unlisted = await page.evaluate(() => window.__selamUnlisted ?? []);
+  if (unlisted.length) throw new Error(`spoken but not in narration list: ${unlisted.join(' | ')}`);
   const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('selam-anbessa.v1')));
   if (!saved.completed?.l1 || !saved.stickers?.includes('l1-selam')) throw new Error('progress was not saved');
   await browser.close();

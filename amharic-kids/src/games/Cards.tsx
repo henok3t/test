@@ -4,6 +4,7 @@ import { Picture } from '../art/Pictures.tsx';
 import { Anbessa } from '../art/Anbessa.tsx';
 import { playClip, saySequence, stopAll } from '../audio/audio.ts';
 import { RoundButton } from '../ui/ui.tsx';
+import { N } from '../data/narration.ts';
 
 /** "Meet the words": one big card per word. */
 export function Cards({ lesson, words, onDone }: { lesson: Lesson; words: string[]; onDone: () => void }) {
@@ -14,7 +15,7 @@ export function Cards({ lesson, words, onDone }: { lesson: Lesson; words: string
 
   const play = async () => {
     setTalking(true);
-    await saySequence([{ clip: w.clip }, { pause: 300 }, { en: w.explain }, { pause: 300 }, { en: 'Now you say it!' }]);
+    await saySequence([{ clip: w.clip }, { pause: 300 }, { en: w.explain }, { pause: 300 }, { en: N.sayIt }]);
     setTalking(false);
   };
   useEffect(() => {

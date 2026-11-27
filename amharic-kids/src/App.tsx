@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
-import { refreshRecordings, unlockAudio } from './audio/audio.ts';
+import { loadVoices, refreshRecordings, setKnownLines, unlockAudio } from './audio/audio.ts';
+import { allLines } from './data/narration.ts';
+import { lessons } from './data/lessons/index.ts';
 import { AppProvider, useApp } from './state.tsx';
 import { Home } from './screens/Home.tsx';
 import { Setup } from './screens/Setup.tsx';
@@ -23,6 +25,8 @@ function Screens() {
 export function App() {
   useEffect(() => {
     refreshRecordings();
+    loadVoices();
+    setKnownLines(allLines(lessons));
     // any first touch unlocks sound on iOS/Android
     const unlock = () => unlockAudio();
     window.addEventListener('pointerdown', unlock, { once: true });

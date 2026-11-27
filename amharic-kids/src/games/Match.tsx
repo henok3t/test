@@ -4,6 +4,7 @@ import { Picture } from '../art/Pictures.tsx';
 import { Anbessa } from '../art/Anbessa.tsx';
 import { playClip, saySequence, sfx, speak, stopAll } from '../audio/audio.ts';
 import { Icon, Sparkles, shuffle } from '../ui/ui.tsx';
+import { N } from '../data/narration.ts';
 
 /** Pair each picture with its Amharic word. Tapping a word always plays it, so pre-readers match by sound. */
 export function Match({ lesson, words, onDone }: { lesson: Lesson; words: string[]; onDone: () => void }) {
@@ -17,7 +18,7 @@ export function Match({ lesson, words, onDone }: { lesson: Lesson; words: string
   const [cheer, setCheer] = useState(false);
 
   useEffect(() => {
-    saySequence([{ en: 'Match each picture with its Amharic word. Tap a word to hear it!' }]);
+    saySequence([{ en: N.matchIntro }]);
     return () => stopAll();
   }, []);
 
@@ -34,7 +35,7 @@ export function Match({ lesson, words, onDone }: { lesson: Lesson; words: string
       if (nd.length === list.length) {
         setTimeout(async () => {
           sfx('yay');
-          await speak('You matched them all!');
+          await speak(N.matchDone);
           onDone();
         }, 700);
       }

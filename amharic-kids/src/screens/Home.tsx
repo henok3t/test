@@ -4,9 +4,10 @@ import { Anbessa } from '../art/Anbessa.tsx';
 import { playClip, sfx, speak, stopAll, unlockAudio } from '../audio/audio.ts';
 import { useApp } from '../state.tsx';
 import { HoldButton, Icon, Tibeb } from '../ui/ui.tsx';
+import { N } from '../data/narration.ts';
 
 export function Home() {
-  const { go, saved, name } = useApp();
+  const { go, saved } = useApp();
   const [pose, setPose] = useState<'wave' | 'happy' | 'talk'>('wave');
   useEffect(() => () => stopAll(), []);
 
@@ -16,7 +17,7 @@ export function Home() {
     await playClip('selam');
     setPose('happy');
     sfx('sparkle');
-    await speak(saved.setupDone ? `Selam, ${name}! Let's play!` : 'Selam! I am Anbessa. Let’s play!');
+    await speak(saved.setupDone ? N.homeAgain : N.homeHello);
     setPose('wave');
   };
 

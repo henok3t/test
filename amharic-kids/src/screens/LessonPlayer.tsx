@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { lessonById } from '../data/lessons/index.ts';
 import type { Lesson } from '../data/types.ts';
 import { clips } from '../data/clips.ts';
-import { preloadClips, stopAll } from '../audio/audio.ts';
+import { preloadClips, preloadNarration, stopAll } from '../audio/audio.ts';
+import { allLines } from '../data/narration.ts';
 import { useApp } from '../state.tsx';
 import { Story } from '../games/Story.tsx';
 import { Cards } from '../games/Cards.tsx';
@@ -34,6 +35,7 @@ function Player({ lesson, startStep }: { lesson: Lesson; startStep: number }) {
 
   useEffect(() => {
     preloadClips(clips.map((c) => c.id));
+    preloadNarration(allLines([lesson]));
     return () => stopAll();
   }, []);
 

@@ -63,21 +63,49 @@ function decode(data: ArrayBuffer): Promise<AudioBuffer> {
   return new Promise((resolve, reject) => getCtx().decodeAudioData(data, resolve, reject));
 }
 
-function loadBuffer(id: string, which: 'mine' | 'default'): Promise<AudioBuffer> {
-  const key = `${which}:${id}`;
+function loadUrl(key: string, url: string): Promise<AudioBuffer> {
   let p = buffers.get(key);
   if (!p) {
-    p =
-      which === 'mine'
-        ? recordings.get(id)!.blob.arrayBuffer().then(decode)
-        : fetch(`${base}audio/${id}.mp3`).then((r) => {
-            if (!r.ok) throw new Error(`missing audio ${id}`);
-            return r.arrayBuffer().then(decode);
-          });
+    p = fetch(url).then((r) => {
+      if (!r.ok) throw new Error(`missing audio ${url}`);
+      return r.arrayBuffer().then(decode);
+    });
     p.catch(() => buffers.delete(key));
     buffers.set(key, p);
   }
   return p;
+}
+
+function loadBuffer(id: string, which: 'mine' | 'default'): Promise<AudioBuffer> {
+  if (which === 'default') return loadUrl(`default:${id}`, `${base}audio/${id}.mp3`);
+  const key = `mine:${id}`;
+  let p = buffers.get(key);
+  if (!p) {
+    p = recordings.get(id)!.blob.arrayBuffer().then(decode);
+    p.catch(() => buffers.delete(key));
+    buffers.set(key, p);
+  }
+  return p;
+}
+
+/** Plays a decoded buffer; resolves when it ends (or is stopped). */
+async function playBuffer(buf: AudioBuffer, gen: number, rate = 1, gainValue = 1) {
+  if (gen !== generation) return;
+  const c = getCtx();
+  if (c.state !== 'running') await c.resume().catch(() => {});
+  const src = c.createBufferSource();
+  src.buffer = buf;
+  src.playbackRate.value = rate;
+  const gain = c.createGain();
+  gain.gain.value = gainValue;
+  src.connect(gain).connect(c.destination);
+  current = src;
+  await new Promise<void>((resolve) => {
+    src.onended = () => resolve();
+    setTimeout(resolve, (buf.duration / rate) * 1000 + 400); // safety net if onended never fires
+    src.start();
+  });
+  if (current === src) current = null;
 }
 
 /** Warm the cache so the first tap plays instantly. */
@@ -106,26 +134,32 @@ export async function playClip(id: string, opts: { which?: 'mine' | 'default'; r
     if (which === 'mine') return playClip(id, { ...opts, which: 'default' });
     return;
   }
-  if (gen !== generation) return;
-  const c = getCtx();
-  if (c.state !== 'running') await c.resume().catch(() => {});
-  const src = c.createBufferSource();
-  src.buffer = buf;
-  src.playbackRate.value = opts.rate ?? 1;
-  const gain = c.createGain();
-  gain.gain.value = which === 'mine' ? 1.4 : 1;
-  src.connect(gain).connect(c.destination);
-  current = src;
-  await new Promise<void>((resolve) => {
-    src.onended = () => resolve();
-    // safety net in case onended never fires
-    setTimeout(resolve, (buf.duration / (opts.rate ?? 1)) * 1000 + 400);
-    src.start();
-  });
-  if (current === src) current = null;
+  await playBuffer(buf, gen, opts.rate ?? 1, which === 'mine' ? 1.4 : 1);
 }
 
 // ---------- English voice ----------
+// Narration is pre-recorded (Gemini text-to-speech, scripts/make-voice.mjs) and listed in voice/en.json
+// as { "sentence": "en/<file>.mp3" }. Sentences without a recording fall back to the device's own voice.
+let recorded = new Map<string, string>();
+const norm = (t: string) => t.replace(/\s+/g, ' ').trim();
+export async function loadVoices() {
+  try {
+    const r = await fetch(`${base}voice/en.json`);
+    if (r.ok) recorded = new Map(Object.entries(await r.json() as Record<string, string>).map(([k, v]) => [norm(k), v]));
+  } catch { /* no recorded narration: device voice only */ }
+}
+export function preloadNarration(texts: string[]) {
+  for (const t of texts) {
+    const f = recorded.get(norm(t));
+    if (f) loadUrl(`en:${f}`, `${base}voice/${f}`).catch(() => {});
+  }
+}
+/** Sentences the app knows about (see data/narration.ts). Anything else is reported for tests. */
+let known: Set<string> | null = null;
+export const setKnownLines = (lines: string[]) => (known = new Set(lines.map(norm)));
+const unlisted: string[] = [];
+(window as unknown as { __selamUnlisted: string[] }).__selamUnlisted = unlisted;
+
 let voice: SpeechSynthesisVoice | null | undefined;
 function pickVoice() {
   if (!('speechSynthesis' in window)) return null;
@@ -140,9 +174,24 @@ function pickVoice() {
 }
 if ('speechSynthesis' in window) speechSynthesis.onvoiceschanged = () => (voice = pickVoice());
 
-export function speak(text: string, opts: { force?: boolean; gen?: number } = {}): Promise<void> {
+export async function speak(text: string, opts: { gen?: number } = {}): Promise<void> {
   const gen = opts.gen ?? generation;
-  if ((!settings.narration && !opts.force) || !('speechSynthesis' in window) || gen !== generation) return Promise.resolve();
+  if (known && !known.has(norm(text)) && !unlisted.includes(text)) unlisted.push(text);
+  if (!settings.narration || gen !== generation) return;
+  const file = recorded.get(norm(text));
+  if (file) {
+    try {
+      return await playBuffer(await loadUrl(`en:${file}`, `${base}voice/${file}`), gen);
+    } catch { /* fall through to the device voice */ }
+  }
+  return deviceSpeak(text, gen);
+}
+
+/** The child's name, which can't be pre-recorded: always the device voice, even with narration off. */
+export const speakName = (name: string, gen?: number) => deviceSpeak(name, gen ?? generation);
+
+function deviceSpeak(text: string, gen: number): Promise<void> {
+  if (!('speechSynthesis' in window) || gen !== generation) return Promise.resolve();
   if (voice === undefined) voice = pickVoice();
   return new Promise((resolve) => {
     const u = new SpeechSynthesisUtterance(text);
@@ -162,7 +211,7 @@ export function speak(text: string, opts: { force?: boolean; gen?: number } = {}
   });
 }
 
-export type SayItem = { clip: string } | { en: string; force?: boolean } | { pause: number };
+export type SayItem = { clip: string } | { en: string } | { name: string } | { pause: number };
 
 /** Play a sequence of clips / narration. Starting a new sequence cancels the old one. */
 export async function saySequence(items: SayItem[]) {
@@ -171,7 +220,8 @@ export async function saySequence(items: SayItem[]) {
   for (const it of items) {
     if (gen !== generation) return false;
     if ('clip' in it) await playClip(it.clip, { gen });
-    else if ('en' in it) await speak(it.en, { gen, force: it.force });
+    else if ('en' in it) await speak(it.en, { gen });
+    else if ('name' in it) await speakName(it.name, gen);
     else await new Promise((r) => setTimeout(r, it.pause));
   }
   return gen === generation;

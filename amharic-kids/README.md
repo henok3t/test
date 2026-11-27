@@ -29,10 +29,19 @@ There are no timers and no lives. A wrong answer gets a wiggle and another try.
 
 ## Voices
 
-- **Amharic, default:** bundled clips made with espeak-ng's Amharic voice (`npm run audio`). They're understandable but robotic.
-- **Amharic, recorded:** in the **Grown-ups' corner** (on the home screen, press and hold *Grown-ups*), a parent or relative can record any word. Recordings stay on the device (IndexedDB) and replace the built-in voice while *Use my recordings* is on.
-  - To ship real native-speaker audio for everyone, drop `<clip-id>.mp3` files into `public/audio/` (`npm run audio` doesn't overwrite existing files unless you pass `--force`).
-- **English narration:** the device's own voice (speechSynthesis). It can be turned off, and the story still works with no voice available.
+Every voice is generated ahead of time and bundled with the app, so no API key ships in it.
+
+- **Gemini text-to-speech** (`gemini-3.8-flash-tts`, which supports Amharic) reads both languages:
+  - the English storyteller (voice *Sulafat*) → `public/voice/en/*.mp3`, listed in `public/voice/en.json`
+  - the Amharic words (voice *Achird*) → `public/audio/<clip>.mp3`
+  ```
+  GEMINI_API_KEY=... npm run voice              # generates whatever is missing or changed
+  GEMINI_API_KEY=... npm run voice -- --verify  # Gemini transcribes each Amharic clip back, to catch mistakes
+  ```
+  Every English sentence the app says lives in `src/data/narration.ts` or the lesson files. The playthrough test fails if the app says anything that isn't listed there, because it would have no recording.
+- **Fallbacks:** without generated files, Amharic uses espeak-ng (`npm run audio`) and English uses the device's own voice.
+  The child's name is always spoken by the device voice, since it can't be pre-recorded.
+- **Grown-up recordings:** in the Grown-ups' corner (on the home screen, press and hold *Grown-ups*), anyone can record their own voice for an Amharic word. Recordings stay on the device and take priority over the generated voice.
 
 ## Run it
 

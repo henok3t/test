@@ -3,6 +3,7 @@ import { Sticker } from '../art/Pictures.tsx';
 import { sfx, speak } from '../audio/audio.ts';
 import { useApp } from '../state.tsx';
 import { RoundButton } from '../ui/ui.tsx';
+import { N } from '../data/narration.ts';
 
 export function Stickers() {
   const { go, saved } = useApp();
@@ -19,7 +20,7 @@ export function Stickers() {
           const have = !!id && saved.stickers.includes(id);
           return (
             <button type="button" key={l.id} className={`sticker-slot ${have ? 'have' : ''}`}
-              onClick={() => { sfx(have ? 'sparkle' : 'tap'); speak(have ? `${l.title}! You earned this one.` : `Finish lesson ${l.number} to get this sticker.`); }}>
+              onClick={() => { sfx(have ? 'sparkle' : 'tap'); speak(have ? N.stickerHave(l) : N.stickerMissing(l)); }}>
               {have ? <Sticker id={id!} /> : <span className="mystery">?</span>}
               <span className="slot-label">{l.number}. {l.title}</span>
             </button>

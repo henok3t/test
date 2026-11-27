@@ -116,7 +116,7 @@ export function Parents() {
 
         <section className="panel">
           <h2>Sound</h2>
-          <Toggle label="Read the story aloud" hint="English narration with your device's voice" on={s.narration} set={(v) => setS({ narration: v })} />
+          <Toggle label="Read the story aloud" hint="English narration, read by a recorded storyteller voice" on={s.narration} set={(v) => setS({ narration: v })} />
           <Toggle label="Sound effects" on={s.sounds} set={(v) => setS({ sounds: v })} />
           <Toggle label="Use my recordings" hint={`When on, your recordings replace the built-in voice (${mineCount} recorded)`} on={s.useRecordings} set={(v) => setS({ useRecordings: v })} />
         </section>

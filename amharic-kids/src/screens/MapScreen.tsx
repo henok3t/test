@@ -17,17 +17,18 @@ function Decor({ kind }: { kind: number }) {
 import { sfx, speak, stopAll } from '../audio/audio.ts';
 import { useApp } from '../state.tsx';
 import { Icon, RoundButton } from '../ui/ui.tsx';
+import { N } from '../data/narration.ts';
 
 /** The village path: one stop per lesson. Planned lessons show as "coming soon". */
 export function MapScreen() {
-  const { go, saved, name } = useApp();
+  const { go, saved } = useApp();
   const unlocked = (i: number) => lessons[i].ready && (i === 0 || !!saved.completed[lessons[i - 1].id]);
   const currentIdx = lessons.findIndex((l, i) => unlocked(i) && !saved.completed[l.id]);
   const lastDone = lessons.reduce((acc, l, i) => (saved.completed[l.id] ? i : acc), 0);
   const lionAt = currentIdx >= 0 ? currentIdx : lastDone;
 
   useEffect(() => {
-    speak(currentIdx === 0 && !saved.completed.l1 ? `Hi ${name}! Tap the first stop to start your adventure.` : `Welcome back, ${name}! Where shall we go?`);
+    speak(currentIdx === 0 && !saved.completed.l1 ? N.mapFirst : N.mapBack);
     return () => stopAll();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -38,7 +39,7 @@ export function MapScreen() {
       go({ name: 'lesson', id: l.id });
     } else {
       sfx('oops');
-      speak(l.ready ? 'Finish the stop before this one first!' : `${l.title} is coming soon!`);
+      speak(l.ready ? N.mapLocked : N.mapSoon(l));
     }
   };
 

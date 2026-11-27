@@ -7,6 +7,7 @@ import { Tota } from '../art/Tota.tsx';
 import { playClip, saySequence, sfx, speak, stopAll, type SayItem } from '../audio/audio.ts';
 import { useApp } from '../state.tsx';
 import { Icon, RoundButton, Sparkles } from '../ui/ui.tsx';
+import { N } from '../data/narration.ts';
 
 type StoryStep = Extract<Step, { type: 'story' }>;
 const CAST: CharacterId[] = ['anbessa', 'tota'];
@@ -61,7 +62,7 @@ export function Story({ step, onDone }: { step: StoryStep; onDone: () => void })
       await new Promise((r) => setTimeout(r, 250));
       if (token.current !== my) return;
     }
-    const ok = await saySequence([{ en: beat.narrate.replace('$name', name) }]);
+    const ok = await saySequence([{ en: beat.narrate }]);
     if (ok && token.current === my) setReady(true);
   };
 
@@ -86,12 +87,12 @@ export function Story({ step, onDone }: { step: StoryStep; onDone: () => void })
     if (!beat.childSays || reacted) return;
     const my = ++token.current;
     setTalking(null);
-    const items: SayItem[] = beat.childSays.clips.map((c) => (c === '$name' ? { en: name, force: true } : { clip: c }));
+    const items: SayItem[] = beat.childSays.clips.map((c) => (c === '$name' ? { name } : { clip: c }));
     const done = await saySequence(items);
     if (!done || token.current !== my) return;
     sfx('sparkle');
     setReacted(beat.childSays.react);
-    await speak(['Yay!', 'Wonderful!', 'Great job!', 'You did it!'][i % 4]);
+    await speak(N.praise[i % N.praise.length]);
     setTimeout(() => token.current === my && next(), 900);
   };
 
@@ -117,7 +118,7 @@ export function Story({ step, onDone }: { step: StoryStep; onDone: () => void })
 
       <div className="narration" ref={narr}>
         <RoundButton icon="speaker" label="Hear it again" onClick={playBeat} size="s" color="blue" />
-        <p>{beat.narrate.replace('$name', name)}</p>
+        <p>{beat.narrate}</p>
         {beat.childSays ? (
           <button type="button" className={`say-btn ${reacted ? 'said' : 'pulse'}`} onClick={childSay}>
             <span className="am">{childLabel}</span>

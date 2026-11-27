@@ -46,6 +46,20 @@ npm run preview    # serve dist/
 `dist/` is a static site. Put it on any web host (GitHub Pages, Netlify, …) and open it in Safari or Chrome.
 Then choose **Add to Home Screen** to install it.
 
+## Deploy to Google Cloud
+
+```
+gcloud auth login
+scripts/deploy-gcs.sh YOUR_PROJECT_ID            # bucket defaults to YOUR_PROJECT_ID-selam-anbessa
+```
+
+The script builds the app, creates a public Cloud Storage bucket (if it doesn't exist yet), uploads the app, and prints the address:
+`https://storage.googleapis.com/<bucket>/index.html`. Run it again to publish an update.
+The address is HTTPS, and the app opens directly rather than inside another page's frame. That means microphone recording, offline mode and Add to Home Screen all work there.
+(Inside a preview frame such as a claude.ai artifact, the microphone is blocked, and the Grown-ups' corner says so.)
+
+If your organization blocks public buckets ("public access prevention"), the `allUsers` step will fail. In that case, an administrator needs to allow public access for this bucket.
+
 ## Adding a lesson
 
 1. Add the new Amharic phrases to `src/data/clips.ts` and run `npm run audio` (needs `espeak-ng` and `ffmpeg`).

@@ -11,8 +11,9 @@ const walk = (d) => readdirSync(d).forEach((f) => {
   statSync(p).isDirectory() ? walk(p) : files.push(relative(dist, p));
 });
 walk(dist);
+// index.html rather than './': some static hosts (e.g. a Cloud Storage bucket) don't map a folder to index.html
 // only the woff2 fonts are needed by modern browsers; skip the legacy .woff copies
-const list = ['./', ...files.filter((f) => f !== 'sw.js' && !f.endsWith('.woff')).map((f) => `./${f}`)];
+const list = [...files.filter((f) => f !== 'sw.js' && !f.endsWith('.woff')).map((f) => `./${f}`)];
 const hash = createHash('sha1');
 for (const f of files) hash.update(readFileSync(join(dist, f)));
 const version = hash.digest('hex').slice(0, 10);
@@ -35,7 +36,7 @@ self.addEventListener('fetch', (e) => {
         caches.open(CACHE).then((c) => c.put(e.request, copy));
       }
       return res;
-    }).catch(() => (e.request.mode === 'navigate' ? caches.match('./') : Response.error())))
+    }).catch(() => (e.request.mode === 'navigate' ? caches.match('./index.html') : Response.error())))
   );
 });
 `);

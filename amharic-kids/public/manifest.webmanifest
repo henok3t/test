@@ -2,7 +2,7 @@
   "name": "Selam, Anbessa! Amharic for kids",
   "short_name": "Selam!",
   "description": "A story app that teaches children their first Amharic words.",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

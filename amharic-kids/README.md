@@ -50,11 +50,13 @@ Then choose **Add to Home Screen** to install it.
 
 ```
 npx firebase login                               # once per computer (or set FIREBASE_TOKEN from `firebase login:ci`)
-npm run deploy -- --project YOUR_FIREBASE_PROJECT_ID
+npm run deploy                                   # deploys to the selam-anbessa project (.firebaserc)
 ```
 
+Live at **https://selam-anbessa.web.app**.
+
 `firebase.json` builds the app first, uploads `dist/`, and sets caching and `Permissions-Policy: microphone=(self)` headers.
-The app is served at `https://YOUR_FIREBASE_PROJECT_ID.web.app`. On that address, recording, offline mode and Add to Home Screen all work.
+On that address, recording, offline mode and Add to Home Screen all work.
 To keep it apart from another app in the same project, create a separate Hosting site and pass `--only hosting:SITE` (see the Firebase docs on multiple sites).
 
 ## Deploy to Google Cloud Storage (alternative)

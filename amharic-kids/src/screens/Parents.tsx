@@ -85,7 +85,9 @@ export function Parents() {
   useEffect(() => () => stopAll(), []);
   const s = saved.settings;
   const setS = (patch: Partial<typeof s>) => update((x) => ({ ...x, settings: { ...x.settings, ...patch } }));
-  const recordable = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined';
+  // Inside another page's frame (e.g. a preview link) the microphone is usually blocked.
+  const framed = (() => { try { return window.self !== window.top; } catch { return true; } })();
+  const recordable = !framed && typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined';
   const mineCount = clips.filter((c) => hasRecording(c.id)).length;
 
   return (
@@ -126,7 +128,13 @@ export function Parents() {
             If you, a relative or a friend speaks Amharic, you can <b>record your own voice</b> for any word. Your child will then hear a real person,
             which is much better for learning. Recordings stay on this device.
           </p>
-          {!recordable && <p className="warn">Recording isn’t available in this browser. Try Safari or Chrome on a recent phone or tablet.</p>}
+          {!recordable && (
+            <p className="warn">
+              {framed
+                ? 'Recording isn’t available in this preview, because the microphone is blocked inside it. Open the app from its own web address (or install it to your home screen) to record words.'
+                : 'Recording isn’t available in this browser. Try Safari or Chrome on a recent phone or tablet.'}
+            </p>
+          )}
           {error && <p className="warn" onClick={() => setError('')}>{error}</p>}
           <p className="small">Tap <b>Record</b>, say the word clearly, then tap <b>Stop</b>. You will hear it played back.</p>
           {recordable && clips.map((c) => (

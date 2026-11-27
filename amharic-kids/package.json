@@ -1,0 +1,29 @@
+{
+  "name": "selam-anbessa",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Selam, Anbessa! An Amharic story app for children",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build && node scripts/make-sw.mjs",
+    "preview": "vite preview --host",
+    "audio": "node scripts/make-audio.mjs",
+    "icons": "node scripts/make-icons.mjs",
+    "test": "node tests/playthrough.mjs"
+  },
+  "dependencies": {
+    "@fontsource/fredoka": "^5.3.0",
+    "@fontsource/noto-sans-ethiopic": "^5.3.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.4.0"
+  }
+}
